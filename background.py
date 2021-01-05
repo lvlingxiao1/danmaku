@@ -1,11 +1,11 @@
-import pygame
-from pygame import Rect
+from pygame import image, Rect, Surface
+from settings import SCREEN_SIZE
+
 
 class Background():
-	def __init__(self,screen,setting):
-		self.img=pygame.image.load("images/bg.png")
-		self.screen=screen
-		self.rect=Rect(0,0,setting.scr_width,setting.scr_height)
+    def __init__(self):
+        self.img = image.load("images/bg.png")
+        self.rect = Rect((0, 0), SCREEN_SIZE)
 
-	def draw(self):
-		self.screen.blit(self.img,self.rect)
+    def draw(self, screen: Surface):
+        screen.blit(self.img, self.rect)

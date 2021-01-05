@@ -1,43 +1,36 @@
-import pygame,math
+import math
+from pygame import Surface, Rect
 from pygame.sprite import Sprite
 
+
 class Bullet(Sprite):
-	def __init__(self,parent,screen,source_rect,img,xoffset=0,yoffset=0,speed=64,angle=math.pi/2):
-		super().__init__()
-		self.screen=screen
-		self.image=img
-		self.parent=parent
+    def __init__(self, parent, src_rect: Rect, img: Surface, offset_x=0, offset_y=0, speed=64, angle=math.pi/2):
+        super().__init__()
+        self.image = img
+        self.x = src_rect.centerx + offset_x    # rect only takes integer, need floating point speed
+        self.y = src_rect.centery + offset_y
+        self.rect = img.get_rect()
+        self.rect.center = (self.x, self.y)
 
-		self.rect=self.image.get_rect()
-		self.rect.centerx=source_rect.centerx+xoffset
-		self.rect.centery=source_rect.centery+yoffset
+        self.parent = parent
 
-		self.x=float(self.rect.x)
-		self.y=float(self.rect.y)
+        self.speed_x = speed * math.cos(angle)
+        self.speed_y = -speed * math.sin(angle)
+        self.flash = 0
 
-		self.xspeed=speed*math.cos(angle)
-		self.yspeed=speed*math.sin(angle)
+    def update(self):
+        self.x += self.speed_x
+        self.y += self.speed_y
+        self.rect.center = (self.x, self.y)
 
-		self.flash=0
+    def draw(self, screen: Surface):
+        screen.blit(self.image, self.rect)
+        # if self.flash==0:
+        #	self.screen.blit(self.image,self.rect)
+        #	self.flash=1
 
-	def update(self):
-		self.x+=self.xspeed
-		self.y-=self.yspeed
-		self.rect.x=self.x
-		self.rect.y=self.y
+        # elif self.flash==1:
+        #	self.flash=0
 
-	def blitme(self):
-		self.screen.blit(self.image,self.rect)
-		#if self.flash==0:
-		#	self.screen.blit(self.image,self.rect)
-		#	self.flash=1
-
-		#elif self.flash==1:
-		#	self.flash=0
-
-	def destroy(self):
-		self.parent.remove(self)
-
-
-
-
+    def destroy(self):
+        self.parent.remove(self)
