@@ -4,15 +4,17 @@ import random
 import pygame
 
 from bullet import Bullet
-from player import Player
+from player import NORMAL, Player
 from settings import WIDTH
 
 # time in frames
-PHASE1_TIME = 1000
+PHASE1_TIME = 100
 PHASE2_TIME = 10000
 
 PHASE1_SHOOT_CD = 30
-PHASE2_SHOOT_CD = 20
+PHASE2_SHOOT_CD = 60
+
+RADIUS = 10
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -21,14 +23,20 @@ class Enemy(pygame.sprite.Sprite):
         self.bullets = bullets
         self.target = player
         self.image0 = pygame.image.load('images/stg4aenm.png').convert_alpha()
-        self.image = self.image0.subsurface((0, 0, 64, 80))
+        self.image = self.image0.subsurface((0, 0, 128, 160))
 
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH / 2, 200)
+        self.x = WIDTH / 2
+        self.y = 200
+        self.rect.center = (self.x, self.y)
 
-        shoot_img = pygame.image.load('images/reimu_yyc.png').convert_alpha()
-        self.shoot1 = shoot_img.subsurface((32, 176, 16, 16))
+        self.radius = RADIUS
 
+        shoot_img = pygame.image.load('images/etama2.png').convert_alpha()
+        self.shoot1 = shoot_img.subsurface((64, 224, 32, 32))
+        self.shoot1 = pygame.transform.rotate(self.shoot1, -90)
+        self.shoot2 = shoot_img.subsurface((128, 224, 32, 32))
+        self.shoot2 = pygame.transform.rotate(self.shoot2, -90)
         self.reset()
 
     def reset(self):
@@ -36,15 +44,19 @@ class Enemy(pygame.sprite.Sprite):
         self.phase = 1
         self.cd1 = 0
         self.cd2 = 0
+        self.bullets.empty()
 
     def update(self):
+        if self.target.state != NORMAL:
+            return
+
         if self.phase == 1:
             self.phase1()
             if self.timer >= PHASE1_TIME:
                 self.phase = 2
 
         if self.phase == 2:
-            # self.phase1()
+            self.phase1()
             self.phase2()
             if self.timer >= PHASE2_TIME:
                 self.phase = 0
@@ -55,29 +67,34 @@ class Enemy(pygame.sprite.Sprite):
 
     def phase1(self):
         if self.cd1 <= 0:
-            for _ in range(100):
-                new_bul = self.gen_phase1_bullet()
-                self.bullets.add(new_bul)
+            self.gen_phase1_bullet()
             self.cd1 = PHASE1_SHOOT_CD
 
     def gen_phase1_bullet(self):
-        angle = random.random() * 2 * math.pi
-        image = pygame.transform.rotate(self.shoot1, math.degrees(angle))
-        new_bul = Bullet(self.bullets, self.rect, image, 0, 0, 3, angle)
-        return new_bul
+        angle = random.random() * math.pi
+        for _ in range(32):
+            new_bul = Bullet(self.bullets, self.rect, self.shoot1, 10, 0, 0, 3, angle + 0.03)
+            self.bullets.add(new_bul)
+            new_bul = Bullet(self.bullets, self.rect, self.shoot1, 10, 0, 0, 3.1, angle + 0.06)
+            self.bullets.add(new_bul)
+            new_bul = Bullet(self.bullets, self.rect, self.shoot1, 10, 0, 0, 3.2, angle + 0.09)
+            self.bullets.add(new_bul)
+            new_bul = Bullet(self.bullets, self.rect, self.shoot1, 10, 0, 0, 3.3, angle + 0.12)
+            self.bullets.add(new_bul)
+            angle += math.pi / 16
 
     def phase2(self):
         if self.cd2 <= 0:
-            new_bul = self.gen_phase2_bullet(-100)
-            self.bullets.add(new_bul)
-            new_bul = self.gen_phase2_bullet(100)
-            self.bullets.add(new_bul)
+            self.gen_phase2_bullet()
             self.cd2 = PHASE2_SHOOT_CD
 
-    def gen_phase2_bullet(self, x_shift):
-        angle = math.atan2(-self.target.rect.centery + self.rect.centery, self.target.rect.centerx - self.rect.centerx)
-        image = pygame.transform.rotate(self.shoot1, math.degrees(angle))
-        new_bul = Bullet(self.bullets, self.rect, image, x_shift, 0, 3, angle)
+    def gen_phase2_bullet(self):
+        angle = math.atan2(-self.target.y + self.y, self.target.x - self.x + 100)
+        new_bul = Bullet(self.bullets, self.rect, self.shoot2, 10, -100, 0, 3, angle)
+        self.bullets.add(new_bul)
+        angle = math.atan2(-self.target.y + self.y, self.target.x - self.x - 100)
+        new_bul = Bullet(self.bullets, self.rect, self.shoot2, 10, 100, 0, 3, angle)
+        self.bullets.add(new_bul)
         return new_bul
 
     def draw(self, screen: pygame.Surface):

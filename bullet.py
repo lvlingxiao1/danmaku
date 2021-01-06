@@ -1,22 +1,22 @@
 import math
-from pygame import Surface, Rect
-from pygame.sprite import Sprite
+from pygame import Surface, Rect, transform
+from pygame.sprite import Sprite, Group
 
 
 class Bullet(Sprite):
-    def __init__(self, parent, src_rect: Rect, img: Surface, offset_x=0, offset_y=0, speed=64, angle=math.pi/2):
+    def __init__(self, group: Group, src_rect: Rect, img: Surface, radius: float, offset_x=0, offset_y=0, speed=32, angle=math.pi/2):
         super().__init__()
-        self.image = img
+        self.image = transform.rotate(img, math.degrees(angle))
         self.x = src_rect.centerx + offset_x    # rect only takes integer, need floating point speed
         self.y = src_rect.centery + offset_y
-        self.rect = img.get_rect()
+        self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
+        self.radius = radius
 
-        self.parent = parent
+        self.group = group
 
         self.speed_x = speed * math.cos(angle)
         self.speed_y = -speed * math.sin(angle)
-        self.flash = 0
 
     def update(self):
         self.x += self.speed_x
@@ -25,12 +25,6 @@ class Bullet(Sprite):
 
     def draw(self, screen: Surface):
         screen.blit(self.image, self.rect)
-        # if self.flash==0:
-        #	self.screen.blit(self.image,self.rect)
-        #	self.flash=1
 
-        # elif self.flash==1:
-        #	self.flash=0
-
-    def destroy(self):
-        self.parent.remove(self)
+    def collide(self, x, y, radius):
+        return (self.x - x)**2 + (self.y - y)**2 < (self.radius + radius)**2

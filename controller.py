@@ -1,28 +1,29 @@
-from button import Button
 import pygame
-from pygame import K_RIGHT, K_LEFT, K_UP, K_DOWN, K_LSHIFT, K_z, K_x
-import sys
-import time
-from game_state import GameState, GAME_OVER, RUNNING, START_MENU
+from pygame import K_DOWN, K_LEFT, K_LSHIFT, K_RIGHT, K_UP, K_r, K_x, K_z
+
+from button import Button
+from game_state import GAME_OVER, RUNNING, START_MENU, GameState
 from player import Player
+from settings import MARGIN_LEFT, MARGIN_TOP
 
 
-def handle_input(player: Player, enemy_group, game_state: GameState, play_button: Button):
+def handle_input(player: Player, enemy_group: pygame.sprite.Group, game_state: GameState, play_button: Button):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_state.save_highscore()
-            sys.exit()
+            exit()
         elif event.type == pygame.KEYDOWN:
             key_down(event.key, player)
         elif event.type == pygame.KEYUP:
             key_up(event.key, player)
+            if event.key == K_r:
+                game_state.reset()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if game_state.state == START_MENU:
                 x, y = pygame.mouse.get_pos()
-                if play_button.rect.collidepoint(x, y):
+                if play_button.rect.collidepoint(x - MARGIN_LEFT, y - MARGIN_TOP):
                     game_state.game_start(enemy_group)
             elif game_state == GAME_OVER:
-                game_state.state = START_MENU
                 game_state.reset()
 
 

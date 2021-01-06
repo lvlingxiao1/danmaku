@@ -36,12 +36,9 @@ class GameState:
         for i in enemy_group:
             i.reset()
 
-    def player_died(self, player, enemy_bullets):
+    def player_died(self):
         if self.life_left > 0:
             self.life_left -= 1
         else:
-            self.game_state = GAME_OVER
+            self.state = GAME_OVER
             pygame.mouse.set_visible(True)
-
-        player.reborn()
-        enemy_bullets.empty()

@@ -1,20 +1,22 @@
 import pygame
 from pygame.sprite import Group
+
 from background import Background
-from player import Player
+from button import Button
 from controller import handle_input
 from enemy import Enemy
-from button import Button
+from game_state import RUNNING, GameState
+from player import Player, PLAYER_RADIUS
 from scoreboard import Scoreboard
-from game_state import GameState, RUNNING
+from settings import (FPS, HEIGHT, HIT_SCORE, TIME_SCORE,
+                      WIDTH, WINDOW_WIDTH, WINDOW_HEIGHT)
 from view import draw
-from settings import WIDTH, SCOREBOARD_WIDTH, HEIGHT, SCREEN_SIZE, FPS, HIT_SCORE, TIME_SCORE
 
 if __name__ == "__main__":
     pygame.init()
     pygame.font.init()
-    screen = pygame.display.set_mode(size=(WIDTH+SCOREBOARD_WIDTH, HEIGHT))
-    pygame.display.set_caption('Hmmmmmmm...')
+    screen = pygame.display.set_mode(size=(WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption('Danmaku')
     clock = pygame.time.Clock()
 
     game_state = GameState()
@@ -23,8 +25,8 @@ if __name__ == "__main__":
     bg = Background()
     scoreboard = Scoreboard(game_state)
 
-    playerBullets = Group()
-    player = Player(playerBullets)
+    player_bullets = Group()
+    player = Player(player_bullets)
 
     enemy_group = Group()
     enemy_bullets = Group()
@@ -37,32 +39,37 @@ if __name__ == "__main__":
 
         if game_state.state == RUNNING:
             player.update()
-            playerBullets.update()
+            player_bullets.update()
             enemy_group.update()
             enemy_bullets.update()
 
-            for i in playerBullets.copy():
+            # remove bullets outside of the screen
+            for i in player_bullets.copy():
                 if not i.rect.colliderect(screenRect):
-                    playerBullets.remove(i)
+                    player_bullets.remove(i)
             for i in enemy_bullets.copy():
                 if not i.rect.colliderect(screenRect):
                     enemy_bullets.remove(i)
 
-            collide_dict = pygame.sprite.groupcollide(playerBullets, enemy_group, True, False)
-            for i in collide_dict:
-                game_state.score += HIT_SCORE
+            # collision detection
+            for i in enemy_bullets:
+                if i.collide(player.x, player.y, PLAYER_RADIUS) and not player.invulnerable:
+                    game_state.player_died()
+                    player.die()
+                    enemy_bullets.empty()
+                    break
+
+            for i in player_bullets:
+                for j in enemy_group:
+                    if i.collide(j.x, j.y, j.radius):
+                        game_state.score += HIT_SCORE
 
             game_state.score += TIME_SCORE
 
             if game_state.score > game_state.highscore:
                 game_state.highscore = game_state.score
 
-            for i in enemy_bullets:
-                if i.rect.colliderect(player.rect):
-                    game_state.player_died(player, enemy_bullets)
-                    break
-
-        draw(screen, bg, player, playerBullets, enemy_group,
+        draw(screen, bg, player, player_bullets, enemy_group,
              enemy_bullets, play_button, game_state, scoreboard)
 
         # print(clock.get_fps())
